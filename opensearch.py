@@ -17,13 +17,12 @@ class OpenSearchHandler:
             http_compress=True,
             use_ssl=config.OPENSEARCH_USE_SSL,
         )
-        self.index_name = config.OPENSEARCH_INDEX_NAME
         self.embeddings = HuggingFaceEmbeddings(model_name=config.EMBEDDINGS_MODEL)
         self.llm = ChatOllama(model=config.LLM_MODEL, base_url=config.LLM_BASE_URL)
-        self._initialize_index()
 
-    def _initialize_index(self):
-        """Инициализация индекса OpenSearch с KNN."""
+    def _initialize_index(self, session_token):
+        """Инициализация индекса OpenSearch для конкретной сессии."""
+        index_name = f"{session_token}"
         mapping = {
             "settings": {"index": {"knn": True}},
             "mappings": {
@@ -33,11 +32,13 @@ class OpenSearchHandler:
                 }
             }
         }
-        if not self.client.indices.exists(index=self.index_name):
-            self.client.indices.create(index=self.index_name, body=mapping)
+        if not self.client.indices.exists(index=index_name):
+            self.client.indices.create(index=index_name, body=mapping)
+        return index_name
 
-    def add_documents(self, file_path=None):
+    def add_documents(self, session_token, file_path=None):
         """Загрузка документов, разбиение на части и добавление в OpenSearch."""
+        index_name = self._initialize_index(session_token)
         file_path = file_path or config.DOCUMENT_FILE_PATH
         loader = TextLoader(file_path, encoding='UTF-8')
         documents = loader.load()
@@ -53,13 +54,17 @@ class OpenSearchHandler:
 
         for text, vector in zip(texts, vectors):
             doc = {"text": text, "vector_field": vector}
-            self.client.index(index=self.index_name, body=doc)
+            self.client.index(index=index_name, body=doc)
 
-    def invoke_llm(self, question):
+    def invoke_llm(self, session_token, question):
         """Интерфейс для выполнения запросов к LLM с использованием OpenSearch."""
+        index_name = f"{config.OPENSEARCH_INDEX_PREFIX}_{session_token}"
+        if not self.client.indices.exists(index=index_name):
+            raise ValueError(f"Индекс для сессии '{session_token}' не найден. Добавьте данные перед запросом.")
+
         opensearch_vector_search = OpenSearchVectorSearch(
             f"http://{self.client.transport.hosts[0]['host']}:{self.client.transport.hosts[0]['port']}",
-            self.index_name,
+            index_name,
             self.embeddings,
         )
         retriever = opensearch_vector_search.as_retriever()

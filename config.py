@@ -1,7 +1,6 @@
 OPENSEARCH_HOST = "localhost"
 OPENSEARCH_PORT = 9200
 OPENSEARCH_USE_SSL = False
-OPENSEARCH_INDEX_NAME = "my_index5"
 
 EMBEDDINGS_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
