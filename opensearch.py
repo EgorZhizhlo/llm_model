@@ -17,7 +17,7 @@ class OpenSearchHandler:
         self.client = OpenSearch(
             hosts=[{"host": config.OPENSEARCH_HOST, "port": config.OPENSEARCH_PORT}],
             http_compress=True,
-            use_ssl=config.OPENSEARCH_USE_SSL,
+            use_ssl=False,
         )
         self.embeddings = HuggingFaceEmbeddings(model_name=config.EMBEDDINGS_MODEL)
         self.llm = ChatOllama(model=config.LLM_MODEL, base_url=config.LLM_BASE_URL)
