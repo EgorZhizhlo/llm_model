@@ -9,6 +9,6 @@ if __name__ == "__main__":
     opensearch_handler.add_documents(session_token, config.DOCUMENT_FILE_PATH)
 
     # Выполнение запроса
-    question = "расскажи мне что входит в Работа с клиентами"
+    question = "how fat are crewmates from amongus"
     answer = opensearch_handler.invoke_llm(session_token, question)
     print("Ответ:", answer)

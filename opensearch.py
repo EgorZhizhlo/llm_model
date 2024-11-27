@@ -1,5 +1,6 @@
+from tika import parser
 from opensearchpy import OpenSearch
-from langchain.document_loaders import TextLoader
+from langchain.schema import Document
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain_community.chat_models import ChatOllama
@@ -8,6 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 import config
+import os
 
 
 class OpenSearchHandler:
@@ -36,13 +38,26 @@ class OpenSearchHandler:
             self.client.indices.create(index=index_name, body=mapping)
         return index_name
 
+    def _extract_text(self, file_path):
+        """Извлечение текста из файла с использованием textract."""
+        if not os.path.isfile(file_path):
+            raise ValueError(f"Файл {file_path} не найден.")
+        try:
+            parsed = parser.from_file(file_path)
+            return parsed['content'].strip()
+        except Exception as e:
+            raise ValueError(f"Ошибка при обработке файла {file_path}: {e}")
+
     def add_documents(self, session_token, file_path=None):
         """Загрузка документов, разбиение на части и добавление в OpenSearch."""
         index_name = self._initialize_index(session_token)
         file_path = file_path or config.DOCUMENT_FILE_PATH
-        loader = TextLoader(file_path, encoding='UTF-8')
-        documents = loader.load()
 
+        # Извлечение текста из файла
+        text_content = self._extract_text(file_path)
+        documents = [Document(page_content=text_content)]
+
+        # Разбиение текста на части
         splitter = CharacterTextSplitter(
             chunk_size=config.TEXT_SPLIT_CHUNK_SIZE,
             chunk_overlap=config.TEXT_SPLIT_CHUNK_OVERLAP
@@ -58,7 +73,7 @@ class OpenSearchHandler:
 
     def invoke_llm(self, session_token, question):
         """Интерфейс для выполнения запросов к LLM с использованием OpenSearch."""
-        index_name = f"{config.OPENSEARCH_INDEX_PREFIX}_{session_token}"
+        index_name = f"{session_token}"
         if not self.client.indices.exists(index=index_name):
             raise ValueError(f"Индекс для сессии '{session_token}' не найден. Добавьте данные перед запросом.")
 

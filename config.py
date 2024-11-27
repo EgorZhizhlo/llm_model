@@ -10,6 +10,6 @@ LLM_BASE_URL = "http://localhost:11434"
 TEXT_SPLIT_CHUNK_SIZE = 1000
 TEXT_SPLIT_CHUNK_OVERLAP = 200
 
-DOCUMENT_FILE_PATH = "data/text.txt"
+DOCUMENT_FILE_PATH = "data/amogus.docx"
 
-PROMPT_FILE_PATH = "prompt.txt"
+PROMPT_FILE_PATH = "promt.txt"
