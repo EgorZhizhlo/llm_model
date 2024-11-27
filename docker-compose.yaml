@@ -47,6 +47,15 @@ services:
     networks:
       - opensearch-net
 
+  app:
+    build: .
+    ports:
+    - "8000:8000"
+    volumes:
+      - .:/app
+    networks:
+      - opensearch-net
+
 volumes:
   opensearch-data1:
   ollama:
