@@ -56,7 +56,10 @@ class OpenSearchHandler:
             doc = {"text": text, "vector_field": vector}
             self.client.index(index=index_name, body=doc)
 
-    def invoke_llm(self, session_token, question):
+    def invoke_llm(self, 
+                   session_token: str, 
+                   question:str, 
+                   base_prompt: str = None):
         """Интерфейс для выполнения запросов к LLM с использованием OpenSearch."""
         index_name = f"{session_token}"
         if not self.client.indices.exists(index=index_name):
@@ -70,7 +73,7 @@ class OpenSearchHandler:
         retriever = opensearch_vector_search.as_retriever()
         docs = retriever.invoke(question)
 
-        prompt_template = self._load_prompt()
+        prompt_template = self._load_prompt() if base_prompt is None else base_prompt + '\nQuestion: {question}\nContext: {context}\nAnswer:'
         prompt = ChatPromptTemplate.from_messages([
             ("human", prompt_template)
         ])

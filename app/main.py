@@ -3,6 +3,7 @@ import config as config
 from fastapi import FastAPI, Request, HTTPException, Depends
 from pydantic import BaseModel
 import requests
+from typing import Union
 
 
 app = FastAPI()
@@ -16,6 +17,7 @@ class AddDocumnents(BaseModel):
 class LlmInvokes(BaseModel):
     session_token: str
     question: str
+    base_prompt: Union[str, None] = None
 
 
 @app.post("/add-document")
@@ -37,7 +39,8 @@ async def invoke_llm(
     opensearch_handler = OpenSearchHandler()
     session_token = form.session_token
     question = form.question
+    base_prompt = form.base_prompt
     try:
-        return {"message": opensearch_handler.invoke_llm(session_token, question)}
+        return {"message": opensearch_handler.invoke_llm(session_token, question, base_prompt)}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
