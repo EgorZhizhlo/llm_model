@@ -1,4 +1,3 @@
-from tika import parser
 from opensearchpy import OpenSearch
 from langchain.schema import Document
 from langchain.text_splitter import CharacterTextSplitter
@@ -38,24 +37,10 @@ class OpenSearchHandler:
             self.client.indices.create(index=index_name, body=mapping)
         return index_name
 
-    def _extract_text(self, file_path):
-        """Извлечение текста из файла с использованием textract."""
-        if not os.path.isfile(file_path):
-            raise ValueError(f"Файл {file_path} не найден.")
-        try:
-            parsed = parser.from_file(file_path)
-            return parsed['content'].strip()
-        except Exception as e:
-            raise ValueError(f"Ошибка при обработке файла {file_path}: {e}")
-
-    def add_documents(self, session_token, file_path=None):
+    def add_documents(self, session_token, text=None):
         """Загрузка документов, разбиение на части и добавление в OpenSearch."""
         index_name = self._initialize_index(session_token)
-        file_path = file_path or config.DOCUMENT_FILE_PATH
-
-        # Извлечение текста из файла
-        text_content = self._extract_text(file_path)
-        documents = [Document(page_content=text_content)]
+        documents = [Document(page_content=text)]
 
         # Разбиение текста на части
         splitter = CharacterTextSplitter(

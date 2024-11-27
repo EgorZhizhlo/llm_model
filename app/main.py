@@ -10,7 +10,7 @@ app = FastAPI()
 
 class AddDocumnents(BaseModel):
     session_token: str
-    file_url: str
+    text: str
 
 
 class LlmInvokes(BaseModel):
@@ -24,13 +24,8 @@ async def add_documents(
 ):
     opensearch_handler = OpenSearchHandler()
     try:
-        response = requests.get(form.file_url)
-        if response.status_code != 200:
-            raise HTTPException(
-                status_code=400, detail=f"Ошибка при загрузке файла: статус-код {response.status_code}")
-        doc_text = response.content
-        opensearch_handler.add_documents(form.session_token, doc_text)
-        return doc_text
+        opensearch_handler.add_documents(form.session_token, form.text)
+        return 200
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
