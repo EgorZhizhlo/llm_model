@@ -58,7 +58,7 @@ class OpenSearchHandler:
 
     def invoke_llm(self, session_token, question):
         """Интерфейс для выполнения запросов к LLM с использованием OpenSearch."""
-        index_name = f"{config.OPENSEARCH_INDEX_PREFIX}_{session_token}"
+        index_name = f"{session_token}"
         if not self.client.indices.exists(index=index_name):
             raise ValueError(f"Индекс для сессии '{session_token}' не найден. Добавьте данные перед запросом.")
 
