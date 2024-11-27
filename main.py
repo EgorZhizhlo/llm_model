@@ -1,14 +1,45 @@
 from opensearch import OpenSearchHandler
 import config
+from fastapi import FastAPI, Request, HTTPException, Depends
+from pydantic import BaseModel
+import requests
 
-if __name__ == "__main__":
-    session_token = "user123"
+
+app = FastAPI()
+
+
+class AddDocumnents(BaseModel):
+    session_token: str
+    file_url: str
+
+
+class LlmInvokes(BaseModel):
+    session_token: str
+    question: str
+
+
+@app.post("/add-document")
+async def add_documents(
+    form: AddDocumnents = Depends()
+):
     opensearch_handler = OpenSearchHandler()
+    try:
+        response = requests.get(form.file_url)
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=400, detail=f"Ошибка при загрузке файла: статус-код {response.status_code}")
+        doc_text = response.content
+        opensearch_handler.add_documents(form.session_token, doc_text)
+        return doc_text
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    # Добавление документов в индекс
-    opensearch_handler.add_documents(session_token, config.DOCUMENT_FILE_PATH)
 
-    # Выполнение запроса
-    question = "how fat are crewmates from amongus"
-    answer = opensearch_handler.invoke_llm(session_token, question)
-    print("Ответ:", answer)
+@app.post("/invoke_llm")
+async def invoke_llm(
+    form: LlmInvokes = Depends()
+):
+    opensearch_handler = OpenSearchHandler()
+    session_token = form.session_token
+    question = form.question
+    return {"message": opensearch_handler.invoke_llm(session_token, question)}
