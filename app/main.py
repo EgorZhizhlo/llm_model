@@ -1,5 +1,5 @@
 from opensearch import OpenSearchHandler
-import config
+import config as config
 from fastapi import FastAPI, Request, HTTPException, Depends
 from pydantic import BaseModel
 import requests
@@ -42,4 +42,7 @@ async def invoke_llm(
     opensearch_handler = OpenSearchHandler()
     session_token = form.session_token
     question = form.question
-    return {"message": opensearch_handler.invoke_llm(session_token, question)}
+    try:
+        return {"message": opensearch_handler.invoke_llm(session_token, question)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
