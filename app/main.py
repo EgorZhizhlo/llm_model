@@ -13,6 +13,8 @@ class AddDocumnents(BaseModel):
     session_token: str
     text: str
 
+class ViewSplitTextRequest(BaseModel):
+    session_token: str
 
 class LlmInvokes(BaseModel):
     session_token: str
@@ -28,6 +30,17 @@ async def add_documents(
     try:
         opensearch_handler.add_documents(form.session_token, form.text)
         return 200
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/view-split-text")
+async def view_split_text(
+    request: ViewSplitTextRequest = Depends()
+):
+    opensearch_handler = OpenSearchHandler()
+    try:
+        texts = opensearch_handler.view_split_text(request.session_token)
+        return {"split_texts": texts}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

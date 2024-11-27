@@ -56,6 +56,26 @@ class OpenSearchHandler:
             doc = {"text": text, "vector_field": vector}
             self.client.index(index=index_name, body=doc)
 
+    def view_split_text(self, session_token: str):
+        """
+        Извлекает и возвращает все нарезанные тексты, сохранённые в индексе OpenSearch для данной сессии.
+        
+        :param session_token: Токен сессии, для которой необходимо извлечь документы.
+        :return: Список строк, представляющих нарезанный текст.
+        """
+        index_name = f"{session_token}"
+        if not self.client.indices.exists(index=index_name):
+            raise ValueError(f"Индекс для сессии '{session_token}' не найден.")
+
+        query = {"size": 10000, "query": {"match_all": {}}}  # Получаем до 10 000 документов за раз
+        response = self.client.search(index=index_name, body=query)
+
+        texts = []
+        for hit in response["hits"]["hits"]:
+            texts.append(hit["_source"]["text"])
+
+        return texts
+
     def invoke_llm(self, 
                    session_token: str, 
                    question:str, 
