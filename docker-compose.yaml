@@ -55,10 +55,13 @@ services:
       - ./app:/app
     networks:
       - opensearch-net
+      - shared-network
 
 volumes:
   opensearch-data1:
   ollama:
 
 networks:
+  shared-network:
+    external: true
   opensearch-net:
